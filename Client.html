@@ -75,6 +75,9 @@
 	.neversteped
 	{}
 
+	.canget  
+	{}
+
 </style>
 
 
@@ -87,6 +90,7 @@ $(document).ready(function (){
 var mysideiswhite = true;
 var mustdisconnect = true;
 var mystepisnow = false;
+var flagfordeletecanget = true;
 
 // <for client>
 var	socket = io.connect("http://localhost:81");
@@ -150,6 +154,20 @@ socket.on("makeMove", function(data) {
 	if ($(id1).hasClass('pawn'))
 	{
 		$(id1).removeClass('pawn');
+
+		if ($(id1).hasClass('neversteped'))
+		{
+			$(id1).removeClass('neversteped');
+			if ((data.yfrom + 2 == data.yto) || (data.yfrom - 2 == data.yto))
+			{
+				$('.canget').each(function() {
+					$(this).removeClass('canget');
+				});
+				$(id2).addClass('canget');
+				flagfordeletecanget = false;
+			}
+		}
+
 		if (data.newfigure != undefined)
 		{
 			if (data.newfigure == 'rook')
@@ -192,6 +210,23 @@ socket.on("makeMove", function(data) {
 				$(id2).html("<img src='./chess_piece/pawn_black.png'>");
 			else if ($(id2).hasClass('whiteside'))
 				$(id2).html("<img src='./chess_piece/pawn_white.png'>");
+		}
+
+		//если ход противника - это взятие на проходе
+		if ($("#" + "id_" + (data.yto + 1) + "_" + data.xto).hasClass('canget'))
+		{
+			$("#" + "id_" + (data.yto + 1) + "_" + data.xto).empty();
+			$("#" + "id_" + (data.yto + 1) + "_" + data.xto).removeClass('pawn');
+			$("#" + "id_" + (data.yto + 1) + "_" + data.xto).removeClass('whiteside');
+			$("#" + "id_" + (data.yto + 1) + "_" + data.xto).addClass('emptycell');
+		}
+
+		if ($("#" + "id_" + (data.yto - 1) + "_" + data.xto).hasClass('canget'))
+		{
+			$("#" + "id_" + (data.yto - 1) + "_" + data.xto).empty();
+			$("#" + "id_" + (data.yto - 1) + "_" + data.xto).removeClass('pawn');
+			$("#" + "id_" + (data.yto - 1) + "_" + data.xto).removeClass('whiteside');
+			$("#" + "id_" + (data.yto - 1) + "_" + data.xto).addClass('emptycell');
 		}
 	}
 	
@@ -294,6 +329,15 @@ socket.on("makeMove", function(data) {
 			$("#id_7_5").html("<img src='./chess_piece/rook_black.png'>");	
 		}
 	}
+
+	//отмена последующего взятия на проходе, которым не воспользовались, когда можно было воспользоваться
+	if (flagfordeletecanget)
+	{
+		$('.canget').each(function() {
+			$(this).removeClass('canget');
+		});
+	}	
+
 	mystepisnow = true;
 	mustdisconnect = false;
 	EachKingCheck();
@@ -367,7 +411,7 @@ function CreateBoard()
 			{
 				newcell.innerHTML="<img src='./chess_piece/pawn_white.png'>";
 				$(newcell).addClass('pawn');
-				$(newcell).addClass('neversteped');    //для первого хода пешки (на клетку или через клетку)
+				$(newcell).addClass('neversteped');    //для первого хода пешки (на клетку или через клетку) и взятия на проходе
 				$(newcell).addClass('whiteside');
 			}
 
@@ -411,7 +455,7 @@ function CreateBoard()
 			{
 				newcell.innerHTML="<img src='./chess_piece/pawn_black.png'>";
 				$(newcell).addClass('pawn');
-				$(newcell).addClass('neversteped');   //для первого хода пешки (на клетку или через клетку)
+				$(newcell).addClass('neversteped');   //для первого хода пешки (на клетку или через клетку) и взятия на проходе
 				$(newcell).addClass('blackside');
 			}
 
@@ -449,9 +493,11 @@ function CreateBoard()
 
 
 					//взятие на проходе
-					/*if ($('#' + 'id_' + i + '_' + (j+1)).hasClass('blackside'))  //если можно есть по другой диагонали
+					if ($('#' + 'id_' + i + '_' + (j-1)).hasClass('canget'))
+						$('#' + 'id_' + (i+1) + '_' + (j-1)).addClass('highlighted');
+					if ($('#' + 'id_' + i + '_' + (j+1)).hasClass('canget'))
 						$('#' + 'id_' + (i+1) + '_' + (j+1)).addClass('highlighted');
-*/
+
 
 				}
 				else if ($(this).hasClass('blackside') && !(mysideiswhite))
@@ -470,8 +516,11 @@ function CreateBoard()
 						$('#' + 'id_' + (i-1) + '_' + (j+1)).addClass('highlighted');
 
 
-
-
+					//взятие на проходе
+					if ($('#' + 'id_' + i + '_' + (j-1)).hasClass('canget'))
+						$('#' + 'id_' + (i-1) + '_' + (j-1)).addClass('highlighted');
+					if ($('#' + 'id_' + i + '_' + (j+1)).hasClass('canget'))
+						$('#' + 'id_' + (i-1) + '_' + (j+1)).addClass('highlighted');
 
 				}
 			}
@@ -923,8 +972,8 @@ function CreateBoard()
 					that.empty();
 					$(this).empty();
 					that.removeClass('pawn');
-					if (that.hasClass('neversteped')) 
-						that.removeClass('neversteped');
+					//if (that.hasClass('neversteped')) 
+						//that.removeClass('neversteped');
 					that.addClass('emptycell');
 
 					if ($(this).hasClass('emptycell')) 
@@ -1026,7 +1075,7 @@ function CreateBoard()
 
 								document.body.removeChild(table2);
 
-								//EachKingCheck();
+								EachKingCheck();
 							});
 						}
 						else
@@ -1037,11 +1086,35 @@ function CreateBoard()
 							socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
 							mystepisnow = false;
 						}
-/*
-						if (i == Number(that.attr('id').substring(3,4)) + 2) //пешка сделала длинный ход
-							id_for_takingpawn = 'id_' + (i - 1) + '_' + j;
-						*/
 
+						//взятие на проходе
+						if (i == Number(that.attr('id').substring(3,4)) + 2) //пешка сделала длинный ход
+							//id_for_takingpawn = 'id_' + (i - 1) + '_' + j;
+						{
+							$('.canget').each(function() {
+								$(this).removeClass('canget');
+							});
+							that.removeClass('neversteped');
+							$(this).addClass('canget');
+							flagfordeletecanget = true;
+						}
+
+						if ($('#' + 'id_' + (i-1) + '_' + j).hasClass('canget'))
+						{
+							$('#' + 'id_' + (i-1) + '_' + j).empty();
+							$('#' + 'id_' + (i-1) + '_' + j).removeClass('pawn');
+							$('#' + 'id_' + (i-1) + '_' + j).removeClass('blackside');
+							$('#' + 'id_' + (i-1) + '_' + j).addClass('emptycell');
+
+							$('#' + 'id_' + (i-1) + '_' + j).removeClass('canget');
+						}
+						/*else
+						{
+							$('.canget').each(function() {
+								$(this).removeClass('canget');
+							});
+						}
+						*/
 						// <for client>
 						
 						// </for client>
@@ -1132,7 +1205,7 @@ function CreateBoard()
 								}
 
 								document.body.removeChild(table2);
-								//EachKingCheck();
+								EachKingCheck();
 							});
 						}
 						else
@@ -1143,10 +1216,37 @@ function CreateBoard()
 							socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
 							mystepisnow = false;
 						}
-/*
+
+
+						//взятие на проходе
 						if (i == Number(that.attr('id').substring(3,4)) - 2) //пешка сделала длинный ход
-							id_for_takingpawn = 'id_' + (i + 1) + '_' + j;
+							//id_for_takingpawn = 'id_' + (i - 1) + '_' + j;
+						{
+							$('.canget').each(function() {
+								$(this).removeClass('canget');
+							});
+							that.removeClass('neversteped');
+							$(this).addClass('canget');
+							flagfordeletecanget = true;
+						}
+
+						if ($('#' + 'id_' + (i+1) + '_' + j).hasClass('canget'))
+						{
+							$('#' + 'id_' + (i+1) + '_' + j).empty();
+							$('#' + 'id_' + (i+1) + '_' + j).removeClass('pawn');
+							$('#' + 'id_' + (i+1) + '_' + j).removeClass('blackside');
+							$('#' + 'id_' + (i+1) + '_' + j).addClass('emptycell');
+
+							$('#' + 'id_' + (i+1) + '_' + j).removeClass('canget');
+						}
+						/*else
+						{
+							$('.canget').each(function() {
+								$(this).removeClass('canget');
+							});
+						}
 						*/
+
 					}
 				}
 			}
@@ -1574,6 +1674,14 @@ function CreateBoard()
 			});
 
 */
+			//отмена последующего взятия на проходе, которым не воспользовались, когда можно было воспользоваться
+			if (!flagfordeletecanget)
+			{
+				$('.canget').each(function() {
+					$(this).removeClass('canget');
+				});
+			}
+
 			//приведение клеток к нормальному черно-белому виду
 			$('.highlighted').each(function(){    
 				if ($(this).hasClass('brown'))
