@@ -1,0 +1,1967 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="ru">
+<head>
+<meta charset="utf-8">	
+
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script> 
+<script src="http://localhost:81/socket.io/socket.io.js"></script>
+
+<style type="text/css">
+	.brown {
+		width: 100px; 
+		height: 100px;
+    	background-color: #8B4513;
+	}
+	
+	.yellow {
+		width: 100px; 
+		height: 100px;
+    	background-color: #FFCC66;
+	}
+
+	.highlighted {
+		width: 100px; 
+		height: 100px;
+		background-color: #00FF7F;
+	}
+
+	.position_after_castling{
+		width: 100px; 
+		height: 100px;
+		background-color: #FF6633;
+	}
+
+	.aaa {
+		width: 100px; 
+		height: 100px;
+		background-color: #0DDFF3;
+	}
+
+	img
+	{
+		width: 100px;
+		height: 100px;
+	}
+
+	.blackside
+	{}
+
+	.whiteside
+	{}
+
+	.emptycell
+	{}
+
+	.king 
+	{}
+
+	.queen
+	{}
+
+	.rook
+	{}
+
+	.knight
+	{}
+
+	.bishop
+	{}
+
+	.pawn 
+	{}
+
+	.neversteped
+	{}
+
+</style>
+
+
+<script type="text/javascript">
+
+$(document).ready(function (){
+	CreateBoard()
+});
+
+var mysideiswhite = true;
+var mustdisconnect = true;
+var mystepisnow = false;
+
+// <for client>
+var	socket = io.connect("http://localhost:81");
+socket.on("connected", function() {   
+	socket.emit("readyToPlay"); 
+	alert('Connected and ready to play');
+});
+socket.on("waitingForPlayers", function() {
+	alert("#############   Вы будете играть за белых!!!   ###############");  //допилить блокировку ходов за черных (можно использовать флаг) и блокировку белых
+	mysideiswhite = false;
+	mystepisnow = true;
+});
+socket.on("gameStarted", function() {
+	//можно начинать игру
+});
+socket.on("makeMove", function(data) {
+	var id1, id2;
+	id1 = "#" + "id_" + data.yfrom + "_" + data.xfrom;
+	id2 = "#" + "id_" + data.yto + "_" + data.xto;
+
+	//alert(id1 + "   " + id2);
+	if (data.newfigure != undefined)
+		alert(data.newfigure);
+
+	$(id1).empty();
+	$(id2).empty();
+	if ($(id2).hasClass('emptycell'))
+		$(id2).removeClass('emptycell');
+
+	if ($(id1).hasClass('blackside'))
+	{
+		$(id1).removeClass('blackside');
+		if ($(id2).hasClass('whiteside'))
+			$(id2).removeClass('whiteside');
+		$(id2).addClass('blackside');
+	}
+	else if ($(id1).hasClass('whiteside'))
+	{
+		$(id1).removeClass('whiteside');
+		if ($(id2).hasClass('blackside'))
+			$(id2).removeClass('blackside');	
+		$(id2).addClass('whiteside');
+	}
+
+	$(id1).addClass('emptycell');
+
+	if ($(id2).hasClass('pawn'))
+		$(id2).removeClass('pawn');
+	if ($(id2).hasClass('rook'))
+		$(id2).removeClass('rook');
+	if ($(id2).hasClass('knight'))
+		$(id2).removeClass('knight');
+	if ($(id2).hasClass('bishop'))
+		$(id2).removeClass('bishop');
+	if ($(id2).hasClass('queen'))
+		$(id2).removeClass('queen');
+	if ($(id2).hasClass('king'))
+		$(id2).removeClass('king');
+	
+
+	if ($(id1).hasClass('pawn'))
+	{
+		$(id1).removeClass('pawn');
+		if (data.newfigure != undefined)
+		{
+			if (data.newfigure == 'rook')
+			{				
+				$(id2).addClass('rook');
+				if ($(id2).hasClass('blackside'))
+					$(id2).html("<img src='./chess_piece/rook_black.png'>");
+				else if ($(id2).hasClass('whiteside'))
+					$(id2).html("<img src='./chess_piece/rook_white.png'>");
+			}
+			if (data.newfigure == 'bishop')
+			{				
+				$(id2).addClass('bishop');
+				if ($(id2).hasClass('blackside'))
+					$(id2).html("<img src='./chess_piece/bishop_black.png'>");
+				else if ($(id2).hasClass('whiteside'))
+					$(id2).html("<img src='./chess_piece/bishop_white.png'>");
+			}
+			if (data.newfigure == 'knight')
+			{				
+				$(id2).addClass('knight');
+				if ($(id2).hasClass('blackside'))
+					$(id2).html("<img src='./chess_piece/knight_black.png'>");
+				else if ($(id2).hasClass('whiteside'))
+					$(id2).html("<img src='./chess_piece/knight_white.png'>");
+			}
+			if (data.newfigure == 'queen')
+			{				
+				$(id2).addClass('queen');
+				if ($(id2).hasClass('blackside'))
+					$(id2).html("<img src='./chess_piece/queen_black.png'>");
+				else if ($(id2).hasClass('whiteside'))
+					$(id2).html("<img src='./chess_piece/queen_white.png'>");
+			}
+		}
+		else
+		{
+			$(id2).addClass('pawn');
+			if ($(id2).hasClass('blackside'))
+				$(id2).html("<img src='./chess_piece/pawn_black.png'>");
+			else if ($(id2).hasClass('whiteside'))
+				$(id2).html("<img src='./chess_piece/pawn_white.png'>");
+		}
+	}
+	
+	if ($(id1).hasClass('rook'))
+	{
+		$(id1).removeClass('rook');
+		$(id2).addClass('rook');
+		if ($(id2).hasClass('blackside'))
+			$(id2).html("<img src='./chess_piece/rook_black.png'>");
+		else if ($(id2).hasClass('whiteside'))
+			$(id2).html("<img src='./chess_piece/rook_white.png'>");
+	}	
+
+	if ($(id1).hasClass('knight'))
+	{
+		$(id1).removeClass('knight');
+		$(id2).addClass('knight');
+		if ($(id2).hasClass('blackside'))
+			$(id2).html("<img src='./chess_piece/knight_black.png'>");
+		else if ($(id2).hasClass('whiteside'))
+			$(id2).html("<img src='./chess_piece/knight_white.png'>");
+	}
+
+	if ($(id1).hasClass('bishop'))
+	{
+		$(id1).removeClass('bishop');
+		$(id2).addClass('bishop');
+		if ($(id2).hasClass('blackside'))
+			$(id2).html("<img src='./chess_piece/bishop_black.png'>");
+		else if ($(id2).hasClass('whiteside'))
+			$(id2).html("<img src='./chess_piece/bishop_white.png'>");
+	}
+
+	if ($(id1).hasClass('king'))
+	{
+		$(id1).removeClass('king');
+		$(id2).addClass('king');
+		if ($(id2).hasClass('blackside'))
+			$(id2).html("<img src='./chess_piece/king_black.png'>");
+		else if ($(id2).hasClass('whiteside'))
+			$(id2).html("<img src='./chess_piece/king_white.png'>");
+	}
+
+	if ($(id1).hasClass('queen'))
+	{
+		$(id1).removeClass('queen');
+		$(id2).addClass('queen');
+		if ($(id2).hasClass('blackside'))
+			$(id2).html("<img src='./chess_piece/queen_black.png'>");
+		else if ($(id2).hasClass('whiteside'))
+			$(id2).html("<img src='./chess_piece/queen_white.png'>");
+	}
+
+	//*********** Рокировка *********************
+
+	if (id1 == "#id_0_4" || id1 == "#id_7_4")
+	{
+		if (id1 == "#id_0_4" && id2 == "#id_0_2")
+		{
+			$("#id_0_0").removeClass('rook');
+			$("#id_0_0").removeClass('whiteside');
+			$("#id_0_0").addClass('emptycell');
+			$("#id_0_0").empty();
+			$("#id_0_3").removeClass('emptycell');
+			$("#id_0_3").addClass('rook');
+			$("#id_0_3").addClass('whiteside');
+			$("#id_0_3").html("<img src='./chess_piece/rook_white.png'>");
+		}
+		if (id1 == "#id_0_4" && id2 == "#id_0_6")
+		{
+			$("#id_0_7").removeClass('rook');
+			$("#id_0_7").removeClass('whiteside');
+			$("#id_0_7").addClass('emptycell');
+			$("#id_0_7").empty();
+			$("#id_0_5").removeClass('emptycell');
+			$("#id_0_5").addClass('rook');
+			$("#id_0_5").addClass('whiteside');
+			$("#id_0_5").html("<img src='./chess_piece/rook_white.png'>");
+		}
+		if (id1 == "#id_7_4" && id2 == "#id_7_2")
+		{
+			$("#id_7_0").removeClass('rook');
+			$("#id_7_0").removeClass('whiteside');
+			$("#id_7_0").addClass('emptycell');
+			$("#id_7_0").empty();
+			$("#id_7_3").removeClass('emptycell');
+			$("#id_7_3").addClass('rook');
+			$("#id_7_3").addClass('whiteside');
+			$("#id_7_3").html("<img src='./chess_piece/rook_black.png'>");
+		}
+		if (id1 == "#id_7_4" && id2 == "#id_7_6")
+		{
+			$("#id_7_7").removeClass('rook');
+			$("#id_7_7").removeClass('whiteside');
+			$("#id_7_7").addClass('emptycell');
+			$("#id_7_7").empty();
+			$("#id_7_5").removeClass('emptycell');
+			$("#id_7_5").addClass('rook');
+			$("#id_7_5").addClass('whiteside');
+			$("#id_7_5").html("<img src='./chess_piece/rook_black.png'>");	
+		}
+	}
+	mystepisnow = true;
+	mustdisconnect = false;
+	EachKingCheck();
+});
+
+// </for client>
+
+var that;
+var count;
+var id_for_takingpawn;
+var replaced;
+var flag = 0;  //если 0, то по клику выделить клетки возможных ходов зеленым цветом; если 1 - по клику сделать ход
+function CreateBoard()
+{
+	var newline;
+	var newcell;
+	var table = document.createElement("TABLE");
+	$(table).attr({'id': 'tableid'});
+
+	//count = document.getElementById('1').value;
+	count = 8;
+	for (i=0; i<8; i++)
+	{
+		newline = table.insertRow(i);
+		for (j=0; j<count; j++)
+		{
+			newcell = newline.insertCell(j);
+			$(newcell).attr({'id': 'id_' + i + '_' + j});
+			if ((i+j)%2==0)
+			{
+				$(newcell).addClass('brown');
+			}
+			else 
+			{
+				$(newcell).addClass('yellow');
+			}
+			
+			if ((i==0 && j==0) || (i==0 && j==count-1))
+			{
+				newcell.innerHTML="<img src='./chess_piece/rook_white.png'>";
+				$(newcell).addClass('rook');
+				$(newcell).addClass('neversteped');   //для рокировки
+				$(newcell).addClass('whiteside');
+			}
+			if ((i==0 && j==1) || (i==0 && j==count-2))
+			{
+				newcell.innerHTML="<img src='./chess_piece/knight_white.png'>";
+				$(newcell).addClass('knight');
+				$(newcell).addClass('whiteside');
+			}
+			if ((i==0 && j==2) || (i==0 && j==count-3))
+			{
+				newcell.innerHTML="<img src='./chess_piece/bishop_white.png'>";
+				$(newcell).addClass('bishop');
+				$(newcell).addClass('whiteside');
+			}
+			if (i==0 && j==3)
+			{
+				newcell.innerHTML="<img src='./chess_piece/queen_white.png'>";
+				$(newcell).addClass('queen');
+				$(newcell).addClass('whiteside');
+			}
+			if (i==0 && j==count-4)
+			{
+				newcell.innerHTML="<img src='./chess_piece/king_white.png'>";
+				$(newcell).addClass('king');
+				$(newcell).addClass('neversteped');    //для рокировки
+				$(newcell).addClass('whiteside');
+			}
+			if (i==1)
+			{
+				newcell.innerHTML="<img src='./chess_piece/pawn_white.png'>";
+				$(newcell).addClass('pawn');
+				$(newcell).addClass('neversteped');    //для первого хода пешки (на клетку или через клетку)
+				$(newcell).addClass('whiteside');
+			}
+
+			if (i>1 && i<count-2)
+				$(newcell).addClass('emptycell');
+
+
+			if ((i==count-1 && j==0) || (i==count-1 && j==count-1))
+			{
+				newcell.innerHTML="<img src='./chess_piece/rook_black.png'>";
+				$(newcell).addClass('rook');
+				$(newcell).addClass('neversteped');   //для рокировки
+				$(newcell).addClass('blackside');
+			}
+			if ((i==count-1 && j==1) || (i==count-1 && j==count-2))
+			{
+				newcell.innerHTML="<img src='./chess_piece/knight_black.png'>";
+				$(newcell).addClass('knight');
+				$(newcell).addClass('blackside');
+			}
+			if ((i==count-1 && j==2) || (i==count-1 && j==count-3))
+			{
+				newcell.innerHTML="<img src='./chess_piece/bishop_black.png'>";
+				$(newcell).addClass('bishop');
+				$(newcell).addClass('blackside');
+			}
+			if (i==count-1 && j==3)
+			{
+				newcell.innerHTML="<img src='./chess_piece/queen_black.png'>";
+				$(newcell).addClass('queen');
+				$(newcell).addClass('blackside');
+			}
+			if (i==count-1 && j==count-4)
+			{
+				newcell.innerHTML="<img src='./chess_piece/king_black.png'>";
+				$(newcell).addClass('king');
+				$(newcell).addClass('neversteped');   //для рокировки
+				$(newcell).addClass('blackside');
+			}
+			if (i==count-2)
+			{
+				newcell.innerHTML="<img src='./chess_piece/pawn_black.png'>";
+				$(newcell).addClass('pawn');
+				$(newcell).addClass('neversteped');   //для первого хода пешки (на клетку или через клетку)
+				$(newcell).addClass('blackside');
+			}
+
+		}
+	}
+
+	document.body.appendChild(table);
+
+
+
+	$("#tableid").on('click','td', function(){
+		if (mystepisnow)
+		{
+
+		var i = Number($(this).attr('id').substring(3,4));
+		var j = Number($(this).attr('id').substring(5,6));
+		if(flag==0) 
+		{
+			if ($(this).hasClass('pawn')) 
+			{
+				if ($(this).hasClass('whiteside') && mysideiswhite)
+				{
+					if ($('#' + 'id_' + (i+1) + '_' + j).hasClass('emptycell'))  //если клетка возможного хода (следующая клетка) пустая
+						$('#' + 'id_' + (i+1) + '_' + j).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i+2) + '_' + j).hasClass('emptycell') && $('#' + 'id_' + (i+1) + '_' + j).hasClass('emptycell') &&
+						$(this).hasClass('neversteped'))  //если клетка возможного первого хода (через клетку) пустая
+						$('#' + 'id_' + (i+2) + '_' + j).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i+1) + '_' + (j-1)).hasClass('blackside'))  //если можно есть по одной диагонали
+						$('#' + 'id_' + (i+1) + '_' + (j-1)).addClass('highlighted');				
+		
+					if ($('#' + 'id_' + (i+1) + '_' + (j+1)).hasClass('blackside'))  //если можно есть по другой диагонали
+						$('#' + 'id_' + (i+1) + '_' + (j+1)).addClass('highlighted');	
+
+
+					//взятие на проходе
+					/*if ($('#' + 'id_' + i + '_' + (j+1)).hasClass('blackside'))  //если можно есть по другой диагонали
+						$('#' + 'id_' + (i+1) + '_' + (j+1)).addClass('highlighted');
+*/
+
+				}
+				else if ($(this).hasClass('blackside') && !(mysideiswhite))
+				{
+					if ($('#' + 'id_' + (i-1) + '_' + j).hasClass('emptycell'))  //если клетка возможного хода (следующая клетка) пустая
+						$('#' + 'id_' + (i-1) + '_' + j).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i-2) + '_' + j).hasClass('emptycell') && $('#' + 'id_' + (i-1) + '_' + j).hasClass('emptycell') &&
+						$(this).hasClass('neversteped'))  //если клетка возможного первого хода (через клетку) пустая
+						$('#' + 'id_' + (i-2) + '_' + j).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i-1) + '_' + (j-1)).hasClass('whiteside'))  //если можно есть по одной диагонали
+						$('#' + 'id_' + (i-1) + '_' + (j-1)).addClass('highlighted');				
+		
+					if ($('#' + 'id_' + (i-1) + '_' + (j+1)).hasClass('whiteside'))  //если можно есть по другой диагонали
+						$('#' + 'id_' + (i-1) + '_' + (j+1)).addClass('highlighted');
+
+
+
+
+
+				}
+			}
+			else if ($(this).hasClass('rook'))
+			{
+				if((mysideiswhite && $(this).hasClass('whiteside')) ||(!(mysideiswhite) && $(this).hasClass('blackside')))
+			  	{
+					for (k=i-1; k>-1 ; k--)
+					{
+						if ($('#' + 'id_' + k + '_' + j).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + j).addClass('highlighted');
+				
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + j).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + j).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + j).hasClass('blackside')) ||
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + j).hasClass('whiteside')))			//если можно есть
+						{
+							$('#' + 'id_' + k + '_' + j).addClass('highlighted');
+							break;
+						}
+			
+					}
+			
+					for (k=i+1; k<count; k++)
+					{
+						if ($('#' + 'id_' + k + '_' + j).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + j).addClass('highlighted');
+
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + j).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + j).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + j).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + j).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + k + '_' + j).addClass('highlighted');
+							break;
+						}
+					}
+			
+					for (k=j-1; k>-1; k--)
+					{
+						if ($('#' + 'id_' + i + '_' + k).hasClass('emptycell'))
+							$('#' + 'id_' + i + '_' + k).addClass('highlighted');
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + k).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + k).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + k).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + k).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + i + '_' + k).addClass('highlighted');
+							break;
+						}
+					}
+					for (k=j+1; k<count; k++)
+					{
+						if ($('#' + 'id_' + i + '_' + k).hasClass('emptycell'))
+							$('#' + 'id_' + i + '_' + k).addClass('highlighted');
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + k).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + k).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + k).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + k).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + i + '_' + k).addClass('highlighted');
+							break;
+						}
+					}
+			  	}
+			} 
+			else if ($(this).hasClass('knight'))
+			{
+				if((mysideiswhite && $(this).hasClass('whiteside')) ||(!(mysideiswhite) && $(this).hasClass('blackside')))
+			  	{
+					if ($('#' + 'id_' + (i-2) + '_' + (j-1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i-2) + '_' + (j-1)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i-2) + '_' + (j-1)).hasClass('blackside')))  //1ая клетка возможного хода
+							$('#' + 'id_' + (i-2) + '_' + (j-1)).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i-2) + '_' + (j+1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i-2) + '_' + (j+1)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i-2) + '_' + (j+1)).hasClass('blackside')))	//2ая клетка возможного хода
+							$('#' + 'id_' + (i-2) + '_' + (j+1)).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i-1) + '_' + (j-2)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i-1) + '_' + (j-2)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i-1) + '_' + (j-2)).hasClass('blackside')))  //3я клетка возможного хода
+						$('#' + 'id_' + (i-1) + '_' + (j-2)).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i-1) + '_' + (j+2)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i-1) + '_' + (j+2)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i-1) + '_' + (j+2)).hasClass('blackside')))  //4ая клетка возможного хода
+						$('#' + 'id_' + (i-1) + '_' + (j+2)).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i+1) + '_' + (j-2)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i+1) + '_' + (j-2)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i+1) + '_' + (j-2)).hasClass('blackside')))  //5ая клетка возможного хода
+						$('#' + 'id_' + (i+1) + '_' + (j-2)).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i+1) + '_' + (j+2)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i+1) + '_' + (j+2)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i+1) + '_' + (j+2)).hasClass('blackside')))  //6ая клетка возможного хода
+						$('#' + 'id_' + (i+1) + '_' + (j+2)).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i+2) + '_' + (j-1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i+2) + '_' + (j-1)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i+2) + '_' + (j-1)).hasClass('blackside')))  //7ая клетка возможного хода
+						$('#' + 'id_' + (i+2) + '_' + (j-1)).addClass('highlighted');
+
+					if ($('#' + 'id_' + (i+2) + '_' + (j+1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i+2) + '_' + (j+1)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i+2) + '_' + (j+1)).hasClass('blackside')))  //8ая клетка возможного хода
+						$('#' + 'id_' + (i+2) + '_' + (j+1)).addClass('highlighted');
+				}
+			}
+			else if ($(this).hasClass('bishop'))
+			{
+				if((mysideiswhite && $(this).hasClass('whiteside')) ||(!(mysideiswhite) && $(this).hasClass('blackside')))
+			  	{
+					for (k=i-1, l=j-1; k>-1, l>-1 ; k--, l--)
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+				
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))			//если можно есть
+						{
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+							break;
+						}
+			
+					}
+			
+					for (k=i-1, l=j+1; k>-1, l<count; k--, l++)
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+							break;
+						}
+					}
+			
+					for (k=i+1, l=j-1; k<count, l>-1; k++, l--)
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+							break;
+						}
+					}
+					for (k=i+1, l=j+1; k<count, l<count; k++, l++)
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+							break;
+						}
+					}
+				}
+			}
+			else if ($(this).hasClass('queen'))
+			{
+				if((mysideiswhite && $(this).hasClass('whiteside')) ||(!(mysideiswhite) && $(this).hasClass('blackside')))
+			  	{
+					for (k=i-1; k>-1 ; k--)
+					{
+						if ($('#' + 'id_' + k + '_' + j).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + j).addClass('highlighted');
+				
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + j).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + j).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + j).hasClass('blackside')) ||
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + j).hasClass('whiteside')))			//если можно есть
+						{
+							$('#' + 'id_' + k + '_' + j).addClass('highlighted');
+							break;
+						}
+			
+					}
+			
+					for (k=i+1; k<count; k++)
+					{
+						if ($('#' + 'id_' + k + '_' + j).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + j).addClass('highlighted');
+
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + j).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + j).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + j).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + j).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + k + '_' + j).addClass('highlighted');
+							break;
+						}
+					}
+			
+					for (k=j-1; k>-1; k--)
+					{
+						if ($('#' + 'id_' + i + '_' + k).hasClass('emptycell'))
+							$('#' + 'id_' + i + '_' + k).addClass('highlighted');
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + k).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + k).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + k).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + k).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + i + '_' + k).addClass('highlighted');
+							break;
+						}
+					}
+					for (k=j+1; k<count; k++)
+					{
+						if ($('#' + 'id_' + i + '_' + k).hasClass('emptycell'))
+							$('#' + 'id_' + i + '_' + k).addClass('highlighted');
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + k).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + k).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + k).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + k).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + i + '_' + k).addClass('highlighted');
+							break;
+						}
+					}
+
+					for (k=i-1, l=j-1; k>-1, l>-1 ; k--, l--)
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+				
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))			//если можно есть
+						{
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+							break;
+						}
+			
+					}
+			
+					for (k=i-1, l=j+1; k>-1, l<count; k--, l++)
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+							break;
+						}
+					}
+			
+					for (k=i+1, l=j-1; k<count, l>-1; k++, l--)
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+							break;
+						}
+					}
+					for (k=i+1, l=j+1; k<count, l<count; k++, l++)
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('emptycell'))
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+						if (($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+							($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+								break;
+						if (($(this).hasClass('whiteside') && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||		//если можно есть
+							($(this).hasClass('blackside') && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+						{
+							$('#' + 'id_' + k + '_' + l).addClass('highlighted');
+							break;
+						}
+					}
+				}
+
+			}
+			else if ($(this).hasClass('king'))
+			{
+				if((mysideiswhite && $(this).hasClass('whiteside')) ||(!(mysideiswhite) && $(this).hasClass('blackside')))
+			  	{
+					if ($('#' + 'id_' + (i-1) + '_' + (j-1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i-1) + '_' + (j-1)).hasClass('whiteside')) || 
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i-1) + '_' + (j-1)).hasClass('blackside'))) //1ая клетка возможного хода
+						if (($(this).hasClass('blackside') && !CheckStalemate('id_' + (i-1) + '_' + (j-1), 'blackside')) ||
+						    ($(this).hasClass('whiteside') && !CheckStalemate('id_' + (i-1) + '_' + (j-1), 'whiteside')))
+						{	
+							$('#' + 'id_' + (i-1) + '_' + (j-1)).addClass('highlighted');
+						}
+
+					if ($('#' + 'id_' + (i-1) + '_' + j).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i-1) + '_' + j).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i-1) + '_' + j).hasClass('blackside')))	//2ая клетка возможного хода
+						if (($(this).hasClass('blackside') && !CheckStalemate('id_' + (i-1) + '_' + j, 'blackside')) ||
+						    ($(this).hasClass('whiteside') && !CheckStalemate('id_' + (i-1) + '_' + j, 'whiteside')))
+						{
+							$('#' + 'id_' + (i-1) + '_' + j).addClass('highlighted');
+						}
+
+					if ($('#' + 'id_' + (i-1) + '_' + (j+1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i-1) + '_' + (j+1)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i-1) + '_' + (j+1)).hasClass('blackside')))  //3я клетка возможного хода
+						if (($(this).hasClass('blackside') && !CheckStalemate('id_' + (i-1) + '_' + (j+1), 'blackside')) ||
+						    ($(this).hasClass('whiteside') && !CheckStalemate('id_' + (i-1) + '_' + (j+1), 'whiteside')))
+						{
+							$('#' + 'id_' + (i-1) + '_' + (j+1)).addClass('highlighted');
+						}
+
+					if ($('#' + 'id_' + i + '_' + (j-1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + (j-1)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + (j-1)).hasClass('blackside')))  //4ая клетка возможного хода
+						if (($(this).hasClass('blackside') && !CheckStalemate('id_' + i + '_' + (j-1), 'blackside')) ||
+						    ($(this).hasClass('whiteside') && !CheckStalemate('id_' + i + '_' + (j-1), 'whiteside')))
+						{
+							$('#' + 'id_' + i + '_' + (j-1)).addClass('highlighted');
+						}
+
+					if ($('#' + 'id_' + i + '_' + (j+1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + i + '_' + (j+1)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + i + '_' + (j+1)).hasClass('blackside')))  //5ая клетка возможного хода
+						if (($(this).hasClass('blackside') && !CheckStalemate('id_' + i + '_' + (j+1), 'blackside')) ||
+						    ($(this).hasClass('whiteside') && !CheckStalemate('id_' + i + '_' + (j+1), 'whiteside')))
+						{
+							$('#' + 'id_' + i + '_' + (j+1)).addClass('highlighted');
+						}
+
+					if ($('#' + 'id_' + (i+1) + '_' + (j-1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i+1) + '_' + (j-1)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i+1) + '_' + (j-1)).hasClass('blackside')))  //6ая клетка возможного хода
+						if (($(this).hasClass('blackside') && !CheckStalemate('id_' + (i+1) + '_' + (j-1), 'blackside')) ||
+						    ($(this).hasClass('whiteside') && !CheckStalemate('id_' + (i+1) + '_' + (j-1), 'whiteside')))
+						{
+							$('#' + 'id_' + (i+1) + '_' + (j-1)).addClass('highlighted');
+						}
+
+					if ($('#' + 'id_' + (i+1) + '_' + j).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i+1) + '_' + j).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i+1) + '_' + j).hasClass('blackside')))  //7ая клетка возможного хода
+						if (($(this).hasClass('blackside') && !CheckStalemate('id_' + (i+1) + '_' + j, 'blackside')) ||
+						    ($(this).hasClass('whiteside') && !CheckStalemate('id_' + (i+1) + '_' + j, 'whiteside')))
+						{
+							$('#' + 'id_' + (i+1) + '_' + j).addClass('highlighted');
+						}
+
+					if ($('#' + 'id_' + (i+1) + '_' + (j+1)).hasClass('emptycell') ||
+						($(this).hasClass('blackside') && $('#' + 'id_' + (i+1) + '_' + (j+1)).hasClass('whiteside')) ||
+						($(this).hasClass('whiteside') && $('#' + 'id_' + (i+1) + '_' + (j+1)).hasClass('blackside')))  //8ая клетка возможного хода
+						if (($(this).hasClass('blackside') && !CheckStalemate('id_' + (i+1) + '_' + (j+1), 'blackside')) ||
+						    ($(this).hasClass('whiteside') && !CheckStalemate('id_' + (i+1) + '_' + (j+1), 'whiteside')))
+						{
+							$('#' + 'id_' + (i+1) + '_' + (j+1)).addClass('highlighted');
+						}
+
+
+					//Проверка возможности рокировки
+					if ($(this).hasClass('neversteped'))
+					{
+						var side;
+						if ($(this).hasClass('blackside'))
+							side = 'blackside';
+						else if ($(this).hasClass('whiteside'))
+							side = 'whiteside';
+
+						if (!CheckStalemate('id_' + i + '_' + j, side))
+						{
+
+							var loose = true;
+							for (k=j-1; k>0; k--)
+							{
+								if (!$('#' + 'id_' + i + '_' + k).hasClass('emptycell'))
+								{
+									loose = false;
+									break;
+								}
+							}
+					
+							if (loose && $('#' + 'id_' + i + '_' + 0).hasClass('neversteped') && !CheckStalemate('id_' + i + '_' + (j-1), side) &&
+								!CheckStalemate('id_' + i + '_' + (j-2), side))
+								$('#' + 'id_' + i + '_' + (j-2)).addClass('position_after_castling');
+
+
+							loose = true;
+							for (k=j+1; k<count-1; k++)
+							{
+								if (!$('#' + 'id_' + i + '_' + k).hasClass('emptycell'))
+								{
+									loose = false;
+									break;
+								}
+							}
+					
+							if (loose && $('#' + 'id_' + i + '_' + (count-1)).hasClass('neversteped') && !CheckStalemate('id_' + i + '_' + (j+1), side) &&
+								!CheckStalemate('id_' + i + '_' + (j+2), side))
+								$('#' + 'id_' + i + '_' + (j+2)).addClass('position_after_castling');
+						}
+
+					}
+				}
+			}
+
+			that = $(this);
+			flag = 1;
+		}
+		else
+		{
+			var y_from = Number(that.attr('id').substring(3,4));
+			var x_from = Number(that.attr('id').substring(5,6));
+			var y_to = Number($(this).attr('id').substring(3,4));
+			var x_to = Number($(this).attr('id').substring(5,6));
+			if (that.hasClass('pawn'))
+			{
+				if ($(this).hasClass('highlighted'))
+				{
+					that.empty();
+					$(this).empty();
+					that.removeClass('pawn');
+					if (that.hasClass('neversteped')) 
+						that.removeClass('neversteped');
+					that.addClass('emptycell');
+
+					if ($(this).hasClass('emptycell')) 
+						$(this).removeClass('emptycell');
+
+					if ($(this).hasClass('rook')) 
+						$(this).removeClass('rook');
+					if ($(this).hasClass('knight')) 
+						$(this).removeClass('knight');
+					if ($(this).hasClass('bishop')) 
+						$(this).removeClass('bishop');
+					if ($(this).hasClass('queen')) 
+						$(this).removeClass('queen');
+
+					if (that.hasClass('whiteside'))
+					{
+						that.removeClass('whiteside');
+						$(this).removeClass('blackside');
+						$(this).addClass('whiteside');
+
+						if (i==7)
+						{
+							//$('#tableid').after('<div>  </div>');
+							var newline2;
+							var newcell2;
+							var table2 = document.createElement("TABLE");
+							$(table2).attr({'id': 'tableid2'});
+							newline2 = table2.insertRow(0);
+
+							newcell2 = newline2.insertCell(0);
+							$(newcell2).attr({'id': 'id_0_0'});
+							$(newcell2).addClass('rook');
+							newcell2.innerHTML="<img src='./chess_piece/rook_white.png'>";
+
+							newcell2 = newline2.insertCell(1);
+							$(newcell2).attr({'id': 'id_0_1'});
+							$(newcell2).addClass('knight');
+							newcell2.innerHTML="<img src='./chess_piece/knight_white.png'>";
+
+							newcell2 = newline2.insertCell(2);
+							$(newcell2).attr({'id': 'id_0_2'});
+							$(newcell2).addClass('bishop');
+							newcell2.innerHTML="<img src='./chess_piece/bishop_white.png'>";
+
+							newcell2 = newline2.insertCell(3);
+							$(newcell2).attr({'id': 'id_0_3'});
+							$(newcell2).addClass('queen');
+							newcell2.innerHTML="<img src='./chess_piece/queen_white.png'>";
+/*
+							newcell2 = newline2.insertCell(4);
+							$(newcell2).attr({'id': 'id_0_4'});
+							$(newcell2).addClass('pawn');
+							newcell2.innerHTML="<img src='./chess_piece/pawn_white.png'>";
+*/
+							document.body.insertBefore(table2, $("#tableid"));
+
+							replaced = this;
+
+							$("#tableid2").on('click','td', function(){
+								//var a = Number($(this).attr('id').substring(3,4));
+								//var b = Number($(this).attr('id').substring(5,6));		
+								/*if ($(this).hasClass('pawn'))
+								{
+									replaced.addClass('pawn');
+									replaced.innerHTML = "<img src='./chess_piece/pawn_white.png'>";
+								}*/
+								if ($(this).hasClass('rook'))
+								{
+									$(replaced).addClass('rook');
+									replaced.innerHTML = "<img src='./chess_piece/rook_white.png'>";
+									///
+									socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to, newfigure: 'rook'});
+									mystepisnow = false;
+								}
+								if ($(this).hasClass('bishop'))
+								{
+									$(replaced).addClass('bishop');
+									replaced.innerHTML = "<img src='./chess_piece/bishop_white.png'>";
+									///
+									socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to, newfigure: 'bishop'});
+									mystepisnow = false;
+								}
+								if ($(this).hasClass('knight'))
+								{
+									$(replaced).addClass('knight');
+									replaced.innerHTML = "<img src='./chess_piece/knight_white.png'>";
+									///
+									socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to, newfigure: 'knight'});
+									mystepisnow = false;
+								}
+								if ($(this).hasClass('queen'))
+								{
+									$(replaced).addClass('queen');
+									replaced.innerHTML = "<img src='./chess_piece/queen_white.png'>";
+									///
+									socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to, newfigure: 'queen'});
+									mystepisnow = false;
+								}
+
+								document.body.removeChild(table2);
+
+								//EachKingCheck();
+							});
+						}
+						else
+						{
+							$(this).addClass('pawn');
+							this.innerHTML="<img src='./chess_piece/pawn_white.png'>";
+							///
+							socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
+							mystepisnow = false;
+						}
+/*
+						if (i == Number(that.attr('id').substring(3,4)) + 2) //пешка сделала длинный ход
+							id_for_takingpawn = 'id_' + (i - 1) + '_' + j;
+						*/
+
+						// <for client>
+						
+						// </for client>
+
+					}
+					if (that.hasClass('blackside'))
+					{
+						that.removeClass('blackside');
+						$(this).removeClass('whiteside');
+						$(this).addClass('blackside');
+
+						if (i==0)
+						{
+							var newline2;
+							var newcell2;
+							var table2 = document.createElement("TABLE");
+							$(table2).attr({'id': 'tableid2'});
+							newline2 = table2.insertRow(0);
+
+							newcell2 = newline2.insertCell(0);
+							$(newcell2).attr({'id': 'id_0_0'});
+							$(newcell2).addClass('rook');
+							newcell2.innerHTML="<img src='./chess_piece/rook_black.png'>";
+
+							newcell2 = newline2.insertCell(1);
+							$(newcell2).attr({'id': 'id_0_1'});
+							$(newcell2).addClass('knight');
+							newcell2.innerHTML="<img src='./chess_piece/knight_black.png'>";
+
+							newcell2 = newline2.insertCell(2);
+							$(newcell2).attr({'id': 'id_0_2'});
+							$(newcell2).addClass('bishop');
+							newcell2.innerHTML="<img src='./chess_piece/bishop_black.png'>";
+
+							newcell2 = newline2.insertCell(3);
+							$(newcell2).attr({'id': 'id_0_3'});
+							$(newcell2).addClass('queen');
+							newcell2.innerHTML="<img src='./chess_piece/queen_black.png'>";
+/*
+							newcell2 = newline2.insertCell(4);
+							$(newcell2).attr({'id': 'id_0_4'});
+							$(newcell2).addClass('pawn');
+							newcell2.innerHTML="<img src='./chess_piece/pawn_black.png'>";
+*/
+							document.body.insertBefore(table2, $("#tableid"));
+
+							replaced = this;
+
+							$("#tableid2").on('click','td', function(){
+								//var a = Number($(this).attr('id').substring(3,4));
+								//var b = Number($(this).attr('id').substring(5,6));		
+								/*if ($(this).hasClass('pawn'))
+								{
+									replaced.addClass('pawn');
+									replaced.innerHTML = "<img src='./chess_piece/pawn_black.png'>";
+								}*/
+								if ($(this).hasClass('rook'))
+								{
+									$(replaced).addClass('rook');
+									replaced.innerHTML = "<img src='./chess_piece/rook_black.png'>";
+									///
+									socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to, newfigure: 'rook'});
+									mystepisnow = false;
+								}
+								if ($(this).hasClass('bishop'))
+								{
+									$(replaced).addClass('bishop');
+									replaced.innerHTML = "<img src='./chess_piece/bishop_black.png'>";
+									///
+									socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to, newfigure: 'bishop'});
+									mystepisnow = false;
+								}
+								if ($(this).hasClass('knight'))
+								{
+									$(replaced).addClass('knight');
+									replaced.innerHTML = "<img src='./chess_piece/knight_black.png'>";
+									///
+									socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to, newfigure: 'knight'});
+									mystepisnow = false;
+								}
+								if ($(this).hasClass('queen'))
+								{
+									$(replaced).addClass('queen');
+									replaced.innerHTML = "<img src='./chess_piece/queen_black.png'>";
+									///
+									socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to, newfigure: 'queen'});
+									mystepisnow = false;
+								}
+
+								document.body.removeChild(table2);
+								//EachKingCheck();
+							});
+						}
+						else
+						{
+							$(this).addClass('pawn');
+							this.innerHTML="<img src='./chess_piece/pawn_black.png'>";
+							///
+							socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
+							mystepisnow = false;
+						}
+/*
+						if (i == Number(that.attr('id').substring(3,4)) - 2) //пешка сделала длинный ход
+							id_for_takingpawn = 'id_' + (i + 1) + '_' + j;
+						*/
+					}
+				}
+			}
+			else if (that.hasClass('rook'))
+			{
+				if ($(this).hasClass('highlighted'))
+				{
+					that.empty();
+					$(this).empty();
+					that.removeClass('rook');
+					if (that.hasClass('neversteped')) 
+						that.removeClass('neversteped');
+					that.addClass('emptycell');
+					$(this).addClass('rook');
+					if (that.hasClass('whiteside'))
+					{
+						that.removeClass('whiteside');
+						$(this).removeClass('blackside');
+						$(this).addClass('whiteside');
+						this.innerHTML="<img src='./chess_piece/rook_white.png'>";
+					}
+					if (that.hasClass('blackside'))
+					{
+						that.removeClass('blackside');
+						$(this).removeClass('whiteside');
+						$(this).addClass('blackside');
+						this.innerHTML="<img src='./chess_piece/rook_black.png'>";
+					}
+
+					if ($(this).hasClass('emptycell')) 
+						$(this).removeClass('emptycell');
+
+					if ($(this).hasClass('pawn')) 
+						$(this).removeClass('pawn');
+					if ($(this).hasClass('knight')) 
+						$(this).removeClass('knight');
+					if ($(this).hasClass('bishop')) 
+						$(this).removeClass('bishop');
+					if ($(this).hasClass('queen')) 
+						$(this).removeClass('queen');
+					//if ($(this).hasClass('king')) 
+					//	$(this).removeClass('king');
+
+					// <for client>
+					
+					socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
+					mystepisnow = false;
+					// </for client>
+				}
+			}
+			else if (that.hasClass('knight'))
+			{
+				if ($(this).hasClass('highlighted'))
+				{
+					that.empty();
+					$(this).empty();
+					that.removeClass('knight');
+					that.addClass('emptycell');
+					$(this).addClass('knight');
+					if (that.hasClass('whiteside'))
+					{
+						that.removeClass('whiteside');
+						$(this).removeClass('blackside');
+						$(this).addClass('whiteside');
+						this.innerHTML="<img src='./chess_piece/knight_white.png'>";
+					}
+					if (that.hasClass('blackside'))
+					{
+						that.removeClass('blackside');
+						$(this).removeClass('whiteside');
+						$(this).addClass('blackside');
+						this.innerHTML="<img src='./chess_piece/knight_black.png'>";
+					}
+
+					if ($(this).hasClass('emptycell')) 
+						$(this).removeClass('emptycell');
+
+					if ($(this).hasClass('pawn')) 
+						$(this).removeClass('pawn');
+					if ($(this).hasClass('rook')) 
+						$(this).removeClass('rook');
+					if ($(this).hasClass('bishop')) 
+						$(this).removeClass('bishop');
+					if ($(this).hasClass('queen')) 
+						$(this).removeClass('queen');
+					//if ($(this).hasClass('king')) 
+					//	$(this).removeClass('king');
+
+					// <for client>
+					
+					socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
+					mystepisnow = false;
+					// </for client>
+				}
+			}
+			else if (that.hasClass('bishop'))
+			{
+				if ($(this).hasClass('highlighted'))
+				{
+					that.empty();
+					$(this).empty();
+					that.removeClass('bishop');
+					that.addClass('emptycell');
+					$(this).addClass('bishop');
+					if (that.hasClass('whiteside'))
+					{
+						that.removeClass('whiteside');
+						$(this).removeClass('blackside');
+						$(this).addClass('whiteside');
+						this.innerHTML="<img src='./chess_piece/bishop_white.png'>";
+					}
+					if (that.hasClass('blackside'))
+					{
+						that.removeClass('blackside');
+						$(this).removeClass('whiteside');
+						$(this).addClass('blackside');
+						this.innerHTML="<img src='./chess_piece/bishop_black.png'>";
+					}
+
+					if ($(this).hasClass('emptycell')) 
+						$(this).removeClass('emptycell');
+
+					if ($(this).hasClass('pawn')) 
+						$(this).removeClass('pawn');
+					if ($(this).hasClass('rook')) 
+						$(this).removeClass('rook');
+					if ($(this).hasClass('knight')) 
+						$(this).removeClass('knight');
+					if ($(this).hasClass('queen')) 
+						$(this).removeClass('queen');
+					//if ($(this).hasClass('king')) 
+					//	$(this).removeClass('king');
+
+					// <for client>
+					
+					socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
+					mystepisnow = false;
+					// </for client>
+				}
+			}
+			else if (that.hasClass('queen'))
+			{
+				if ($(this).hasClass('highlighted'))
+				{
+					that.empty();
+					$(this).empty();
+					that.removeClass('queen');
+					that.addClass('emptycell');
+					$(this).addClass('queen');
+					if (that.hasClass('whiteside'))
+					{
+						that.removeClass('whiteside');
+						$(this).removeClass('blackside');
+						$(this).addClass('whiteside');
+						this.innerHTML="<img src='./chess_piece/queen_white.png'>";
+					}
+					if (that.hasClass('blackside'))
+					{
+						that.removeClass('blackside');
+						$(this).removeClass('whiteside');
+						$(this).addClass('blackside');
+						this.innerHTML="<img src='./chess_piece/queen_black.png'>";
+					}
+
+					if ($(this).hasClass('emptycell')) 
+						$(this).removeClass('emptycell');
+
+					if ($(this).hasClass('pawn')) 
+						$(this).removeClass('pawn');
+					if ($(this).hasClass('rook')) 
+						$(this).removeClass('rook');
+					if ($(this).hasClass('knight')) 
+						$(this).removeClass('knight');
+					if ($(this).hasClass('bishop')) 
+						$(this).removeClass('bishop');
+					//if ($(this).hasClass('king')) 
+					//	$(this).removeClass('king');
+
+					// <for client>
+					
+					socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
+					mystepisnow = false;
+					// </for client>
+				}
+			}
+			else if (that.hasClass('king'))
+			{
+				if ($(this).hasClass('highlighted'))
+				{
+					that.empty();
+					$(this).empty();
+					that.removeClass('king');
+					if (that.hasClass('neversteped')) 
+						that.removeClass('neversteped');
+					that.addClass('emptycell');
+					$(this).addClass('king');
+					if (that.hasClass('whiteside'))
+					{
+						that.removeClass('whiteside');
+						$(this).removeClass('blackside');
+						$(this).addClass('whiteside');
+						this.innerHTML="<img src='./chess_piece/king_white.png'>";
+					}
+					if (that.hasClass('blackside'))
+					{
+						that.removeClass('blackside');
+						$(this).removeClass('whiteside');
+						$(this).addClass('blackside');
+						this.innerHTML="<img src='./chess_piece/king_black.png'>";
+					}
+
+					if ($(this).hasClass('emptycell')) 
+						$(this).removeClass('emptycell');
+
+					if ($(this).hasClass('pawn')) 
+						$(this).removeClass('pawn');
+					if ($(this).hasClass('rook')) 
+						$(this).removeClass('rook');
+					if ($(this).hasClass('knight')) 
+						$(this).removeClass('knight');
+					if ($(this).hasClass('bishop')) 
+						$(this).removeClass('bishop');
+					if ($(this).hasClass('queen')) 
+						$(this).removeClass('queen');
+					//if ($(this).hasClass('king')) 
+					//	$(this).removeClass('king');
+
+					// <for client>
+					
+					socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
+					mystepisnow = false;
+					// </for client>
+				}
+				else if ($(this).hasClass('position_after_castling'))
+				{
+					that.empty();
+					that.removeClass('king');
+					if (that.hasClass('neversteped')) 
+						that.removeClass('neversteped');
+					that.addClass('emptycell');
+					$(this).removeClass('emptycell');
+					$(this).addClass('king');
+					if (j==2)
+					{
+						$('#' + 'id_' + i + '_' + 0).empty();
+						$('#' + 'id_' + i + '_' + 0).removeClass('rook');
+						$('#' + 'id_' + i + '_' + 0).removeClass('neversteped');
+						$('#' + 'id_' + i + '_' + 0).addClass('emptycell');
+
+						$('#' + 'id_' + i + '_' + (j+1)).addClass('rook');
+					}
+					else if (j==6)
+					{
+						$('#' + 'id_' + i + '_' + (count-1)).empty();
+						$('#' + 'id_' + i + '_' + (count-1)).removeClass('rook');
+						$('#' + 'id_' + i + '_' + (count-1)).removeClass('neversteped');
+						$('#' + 'id_' + i + '_' + (count-1)).addClass('emptycell');
+
+						$('#' + 'id_' + i + '_' + (j-1)).addClass('rook');
+					}
+
+
+					if (that.hasClass('whiteside'))
+					{
+						that.removeClass('whiteside');
+						$(this).addClass('whiteside');
+						this.innerHTML="<img src='./chess_piece/king_white.png'>";
+						if (j==2)
+						{
+							$('#' + 'id_' + i + '_' + (j+1)).html("<img src='./chess_piece/rook_white.png'>");
+							$('#' + 'id_' + i + '_' + (j+1)).addClass('whiteside');
+						}
+						if (j==6)
+						{	
+							$('#' + 'id_' + i + '_' + (j-1)).html("<img src='./chess_piece/rook_white.png'>");
+							$('#' + 'id_' + i + '_' + (j-1)).addClass('whiteside');
+						}
+
+					}
+	
+					if (that.hasClass('blackside'))
+					{
+						that.removeClass('blackside');
+						$(this).addClass('blackside');
+						this.innerHTML="<img src='./chess_piece/king_black.png'>";
+						if (j==2)
+						{
+							$('#' + 'id_' + i + '_' + (j+1)).html("<img src='./chess_piece/rook_black.png'>");
+							$('#' + 'id_' + i + '_' + (j+1)).addClass('blackside');
+						}
+						if (j==6)
+						{	
+							$('#' + 'id_' + i + '_' + (j-1)).html("<img src='./chess_piece/rook_black.png'>");
+							$('#' + 'id_' + i + '_' + (j-1)).addClass('blackside');
+						}
+
+					}
+					
+					// <for client>
+					socket.emit("makeMove", {xfrom: x_from, yfrom: y_from, xto: x_to, yto: y_to});
+					mystepisnow = false;
+					// </for client>
+					
+				}
+			}
+
+
+
+			//проверка на шах и/или мат черному и белому королю после каждого хода
+			mustdisconnect = true;
+			EachKingCheck(); 
+		/*	
+			$('.king').each(function(){
+				var sidecolor;
+				if ($(this).hasClass('blackside'))
+					sidecolor = 'blackside';
+				else if ($(this).hasClass('whiteside'))
+					sidecolor = 'whiteside';
+				var k = Number($(this).attr('id').substring(3,4));
+				var l = Number($(this).attr('id').substring(5,6));
+				var shah = false;
+				if (CheckStalemate($(this).attr('id'), sidecolor) && sidecolor=='whiteside')
+				{
+					shah = true;
+					alert('Шах белому королю.');
+				}
+				if (CheckStalemate($(this).attr('id'), sidecolor) && sidecolor=='blackside')
+				{
+					shah = true;
+					alert('Шах черному королю.');
+				}
+
+				var emptycount = 0;
+				var shahcount = 0;
+				if ($('#' + 'id_' + (k-1) + '_' + (l-1)).hasClass('emptycell'))
+				{
+					emptycount++;
+					if(CheckStalemate('id_' + (k-1) + '_' + (l-1), sidecolor))
+					{
+						alert('Shah_'+(k-1) + '_' + (l-1));
+						shahcount++;
+					}
+				} 
+
+
+				if ($('#' + 'id_' + (k-1) + '_' + l).hasClass('emptycell'))
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k-1) + '_' + l, sidecolor))
+					{
+						alert('Shah'+(k-1) + '_' + l);
+						shahcount++;
+					}
+				} 
+
+				if ($('#' + 'id_' + (k-1) + '_' + (l+1)).hasClass('emptycell'))
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k-1) + '_' + (l+1), sidecolor))
+					{
+						alert('Shah'+(k-1) + '_' + (l+1));
+						shahcount++;
+					}
+				}
+
+				if ($('#' + 'id_' + k + '_' + (l-1)).hasClass('emptycell'))
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + k + '_' + (l-1), sidecolor))
+					{
+						alert('Shah'+k + '_' + (l-1));
+						shahcount++;
+					}
+				}
+					
+				if ($('#' + 'id_' + k + '_' + (l+1)).hasClass('emptycell')) 
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + k + '_' + (l+1), sidecolor))
+					{
+						alert('Shah_' + k + '_' + (l+1));
+						shahcount++;
+					}
+				}
+
+				if ($('#' + 'id_' + (k+1) + '_' + (l-1)).hasClass('emptycell')) 
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k+1) + '_' + (l-1), sidecolor))
+					{
+						alert('Shah_'+ (k+1) + '_' + (l-1));
+						shahcount++;
+					}
+				}
+
+				if ($('#' + 'id_' + (k+1) + '_' + l).hasClass('emptycell')) 
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k+1) + '_' + l, sidecolor)) 
+					{
+						alert('Shah_'+(k+1) + '_' + l);
+						shahcount++;
+					}
+				}
+				if ($('#' + 'id_' + (k+1) + '_' + (l+1)).hasClass('emptycell')) 
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k+1) + '_' + (l+1), sidecolor))
+					{
+						alert('Shah_' + (k+1) + '_' + (l+1));
+						shahcount++;
+					}
+				}	
+
+				if ((sidecolor=='blackside' && shahcount==emptycount && emptycount!=0 && shah) || (sidecolor=='blackside' && shah && emptycount==0))
+				{
+						alert('МАТ ЧЕРНОМУ КОРОЛЮ.  БЕЛЫЕ ПОБЕДИЛИ!');
+						socket.emit("disconnect");
+				}
+				if ((sidecolor=='whiteside' && shahcount==emptycount && emptycount!=0 && shah) || (sidecolor=='whiteside' && shah && emptycount==0))
+				{
+						alert('МАТ БЕЛОМУ КОРОЛЮ.  ЧЕРНЫЕ ПОБЕДИЛИ!');
+						socket.emit("disconnect");
+				}
+			});
+
+*/
+			//приведение клеток к нормальному черно-белому виду
+			$('.highlighted').each(function(){    
+				if ($(this).hasClass('brown'))
+					$(this).removeClass('highlighted').addClass('brown');
+				else if ($(this).hasClass('yellow'))
+					$(this).removeClass('highlighted').addClass('yellow');
+			});
+
+			$('.position_after_castling').each(function(){     
+				if ($(this).hasClass('brown'))
+					$(this).removeClass('position_after_castling').addClass('brown');
+				else if ($(this).hasClass('yellow'))
+					$(this).removeClass('position_after_castling').addClass('yellow');
+			});
+
+			flag = 0;
+		
+		}
+		}
+	});
+}
+
+
+
+	function EachKingCheck()
+	{
+		$('.king').each(function(){
+				var sidecolor;
+				var othersidecolor;
+				var nomate = false;
+				if ($(this).hasClass('blackside'))
+				{
+					sidecolor = 'blackside';
+					othersidecolor = 'whiteside';
+				}
+				else if ($(this).hasClass('whiteside'))
+				{
+					sidecolor = 'whiteside';
+					othersidecolor = 'blackside';
+				}
+				var k = Number($(this).attr('id').substring(3,4));
+				var l = Number($(this).attr('id').substring(5,6));
+				var shah = false;
+				if (CheckStalemate($(this).attr('id'), sidecolor) && sidecolor=='whiteside')
+				{
+					shah = true;
+					alert('Шах черному королю.');
+				}
+				if (CheckStalemate($(this).attr('id'), sidecolor) && sidecolor=='blackside')
+				{
+					shah = true;
+					alert('Шах белому королю.');
+				}
+
+				var emptycount = 0;
+				var shahcount = 0;
+				if ($('#' + 'id_' + (k-1) + '_' + (l-1)).hasClass('emptycell'))
+				{
+					emptycount++;
+					if(CheckStalemate('id_' + (k-1) + '_' + (l-1), sidecolor))
+					{
+						//alert('Shah_'+(k-1) + '_' + (l-1));
+						shahcount++;
+					}
+				}
+				else if($('#' + 'id_' + (k-1) + '_' + (l-1)).hasClass(othersidecolor))
+					nomate = true;
+
+				if ($('#' + 'id_' + (k-1) + '_' + l).hasClass('emptycell'))
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k-1) + '_' + l, sidecolor))
+					{
+						//alert('Shah'+(k-1) + '_' + l);
+						shahcount++;
+					}
+				} 
+				else if($('#' + 'id_' + (k-1) + '_' + l).hasClass(othersidecolor))
+					nomate = true;
+
+				if ($('#' + 'id_' + (k-1) + '_' + (l+1)).hasClass('emptycell'))
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k-1) + '_' + (l+1), sidecolor))
+					{
+						//alert('Shah'+(k-1) + '_' + (l+1));
+						shahcount++;
+					}
+				}
+				else if ($('#' + 'id_' + (k-1) + '_' + (l+1)).hasClass(othersidecolor))
+					nomate = true;
+
+				if ($('#' + 'id_' + k + '_' + (l-1)).hasClass('emptycell'))
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + k + '_' + (l-1), sidecolor))
+					{
+						//alert('Shah'+k + '_' + (l-1));
+						shahcount++;
+					}
+				}
+				else if ($('#' + 'id_' + k + '_' + (l-1)).hasClass(othersidecolor))
+					nomate = true;
+					
+				if ($('#' + 'id_' + k + '_' + (l+1)).hasClass('emptycell')) 
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + k + '_' + (l+1), sidecolor))
+					{
+						//alert('Shah_' + k + '_' + (l+1));
+						shahcount++;
+					}
+				}
+				else if ($('#' + 'id_' + k + '_' + (l+1)).hasClass(othersidecolor))
+					nomate = true;
+
+				if ($('#' + 'id_' + (k+1) + '_' + (l-1)).hasClass('emptycell')) 
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k+1) + '_' + (l-1), sidecolor))
+					{
+						//alert('Shah_'+ (k+1) + '_' + (l-1));
+						shahcount++;
+					}
+				}
+				else if ($('#' + 'id_' + (k+1) + '_' + (l-1)).hasClass(othersidecolor))
+					nomate = true; 
+
+				if ($('#' + 'id_' + (k+1) + '_' + l).hasClass('emptycell')) 
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k+1) + '_' + l, sidecolor)) 
+					{
+						//alert('Shah_'+(k+1) + '_' + l);
+						shahcount++;
+					}
+				}
+				else if ($('#' + 'id_' + (k+1) + '_' + l).hasClass(othersidecolor)) 
+					nomate = true;
+
+				if ($('#' + 'id_' + (k+1) + '_' + (l+1)).hasClass('emptycell')) 
+				{
+					emptycount++;
+					if (CheckStalemate('id_' + (k+1) + '_' + (l+1), sidecolor))
+					{
+						//alert('Shah_' + (k+1) + '_' + (l+1));
+						shahcount++;
+					}
+				}
+				else if ($('#' + 'id_' + (k+1) + '_' + (l+1)).hasClass(othersidecolor))
+					nomate = true;	
+
+				if (((sidecolor=='blackside' && shahcount==emptycount && emptycount!=0 && shah) || (sidecolor=='blackside' && shah && emptycount==0)) && !nomate)
+				{
+						alert('МАТ БЕЛОМУ КОРОЛЮ.  ЧЕРНЫЕ ПОБЕДИЛИ!');
+						if (mustdisconnect)
+							socket.emit("disconnect");
+				}
+				if (((sidecolor=='whiteside' && shahcount==emptycount && emptycount!=0 && shah) || (sidecolor=='whiteside' && shah && emptycount==0)) && !nomate)
+				{
+						alert('МАТ ЧЕРНОМУ КОРОЛЮ.  БЕЛЫЕ ПОБЕДИЛИ!');
+						if (mustdisconnect)
+							socket.emit("disconnect");
+				}
+		});
+	}
+	
+
+	function CheckStalemate(id, sideclass)   //return "true" or "false"
+	{
+		var x = Number(id.substring(3,4));  // координаты (x,y) - это координаты той клетки, которую проверяем на шах
+		var y = Number(id.substring(5,6));
+		//alert(x + '_' + y);
+		
+		var result = false;
+		
+				for (k=x-1; k>-1 ; k--)
+				{
+			
+					if ((sideclass=='blackside' && $('#' + 'id_' + k + '_' + y).hasClass('blackside')) ||
+						(sideclass=='whiteside' && $('#' + 'id_' + k + '_' + y).hasClass('whiteside')))
+							break;
+
+					if ((sideclass=='whiteside' && $('#' + 'id_' + k + '_' + y).hasClass('blackside')) ||
+						(sideclass=='blackside' && $('#' + 'id_' + k + '_' + y).hasClass('whiteside')))			//если чужая фигура, то проверяем, представляет ли она угрозу для позиции (x,y) короля
+					{
+						if ($('#' + 'id_' + k + '_' + y).hasClass('rook') || $('#' + 'id_' + k + '_' + y).hasClass('queen') || 
+						   ($('#' + 'id_' + k + '_' + y).hasClass('king') && (x-k==1)))
+						{
+							//console.log('block1');
+							//console.log(k + '_' + y);
+							//console.log(x);
+							return true;
+						}
+						else
+							break;
+					}
+		
+				}
+
+				for (k=x+1; k<count; k++)
+				{
+					if ((sideclass=='blackside' && $('#' + 'id_' + k + '_' + y).hasClass('blackside')) ||
+						(sideclass=='whiteside' && $('#' + 'id_' + k + '_' + y).hasClass('whiteside')))
+							break;
+					if ((sideclass=='whiteside' && $('#' + 'id_' + k + '_' + y).hasClass('blackside')) ||
+						(sideclass=='blackside' && $('#' + 'id_' + k + '_' + y).hasClass('whiteside')))			//если чужая фигура, то проверяем, представляет ли она угрозу для позиции (x,y) короля
+					{
+						if ($('#' + 'id_' + k + '_' + y).hasClass('rook') || $('#' + 'id_' + k + '_' + y).hasClass('queen') || 
+						   ($('#' + 'id_' + k + '_' + y).hasClass('king') && (k-x==1)))
+						{		
+							return true;
+						}
+						else 
+							break;
+					}
+				}
+		
+				for (k=y-1; k>-1; k--)
+				{
+					if ((sideclass=='blackside' && $('#' + 'id_' + x + '_' + k).hasClass('blackside')) ||
+						(sideclass=='whiteside' && $('#' + 'id_' + x + '_' + k).hasClass('whiteside')))
+							break;
+					if ((sideclass=='whiteside' && $('#' + 'id_' + x + '_' + k).hasClass('blackside')) ||
+						(sideclass=='blackside' && $('#' + 'id_' + x + '_' + k).hasClass('whiteside')))			//если чужая фигура, то проверяем, представляет ли она угрозу для позиции (x,y) короля
+					{
+						if ($('#' + 'id_' + x + '_' + k).hasClass('rook') || $('#' + 'id_' + x + '_' + k).hasClass('queen') || 
+						   ($('#' + 'id_' + x + '_' + k).hasClass('king') && (y-k==1)))
+						{		
+							return true;
+						}
+						else
+							break;
+					}
+				}
+				for (k=y+1; k<count; k++)
+				{
+					if ((sideclass=='blackside' && $('#' + 'id_' + x + '_' + k).hasClass('blackside')) ||
+						(sideclass=='whiteside' && $('#' + 'id_' + x + '_' + k).hasClass('whiteside')))
+							break;
+					if ((sideclass=='whiteside' && $('#' + 'id_' + x + '_' + k).hasClass('blackside')) ||
+						(sideclass=='blackside' && $('#' + 'id_' + x + '_' + k).hasClass('whiteside')))			//если чужая фигура, то проверяем, представляет ли она угрозу для позиции (x,y) короля
+					{
+						if ($('#' + 'id_' + x + '_' + k).hasClass('rook') || $('#' + 'id_' + x + '_' + k).hasClass('queen') || 
+						   ($('#' + 'id_' + x + '_' + k).hasClass('king') && (k-y==1)))
+						{		
+							return true;
+						}
+						else
+							break;
+					}
+				}
+
+				for (k=x-1, l=y-1; k>-1, l>-1 ; k--, l--)
+				{
+					
+					if ((sideclass=='blackside' && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+						(sideclass=='whiteside' && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+							break;
+					if ((sideclass=='whiteside' && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+						(sideclass=='blackside' && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))			//если чужая фигура, то проверяем, представляет ли она угрозу для позиции (x,y) короля
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('bishop') || $('#' + 'id_' + k + '_' + l).hasClass('queen') || 
+						   ($('#' + 'id_' + k + '_' + l).hasClass('king') && (x-k==1) && (y-l==1)) || 
+						   ($('#' + 'id_' + k + '_' + l).hasClass('pawn') && sideclass=='blackside' && (x-k==1) && (y-l==1)))
+						{		
+							return true;
+						}
+						else
+							break;
+					}
+				}
+		
+				for (k=x-1, l=y+1; k>-1, l<count; k--, l++)
+				{
+					if ((sideclass=='blackside' && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+						(sideclass=='whiteside' && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+							break;
+					if ((sideclass=='whiteside' && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||		
+						(sideclass=='blackside' && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))			//если чужая фигура, то проверяем, представляет ли она угрозу для позиции (x,y) короля
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('bishop') || $('#' + 'id_' + k + '_' + l).hasClass('queen') || 
+						   ($('#' + 'id_' + k + '_' + l).hasClass('king') && (x-k==1) && (l-y==1)) || 
+						   ($('#' + 'id_' + k + '_' + l).hasClass('pawn') && sideclass=='blackside' && (x-k==1) && (l-y==1)))
+						{		
+							return true;
+						}
+						else
+							break;
+					}
+				}
+		
+				for (k=x+1, l=y-1; k<count, l>-1; k++, l--)
+				{
+					if ((sideclass=='blackside' && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+						(sideclass=='whiteside' && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+							break;
+					if ((sideclass=='whiteside' && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||		
+						(sideclass=='blackside' && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))			//если чужая фигура, то проверяем, представляет ли она угрозу для позиции (x,y) короля
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('bishop') || $('#' + 'id_' + k + '_' + l).hasClass('queen') || 
+						   ($('#' + 'id_' + k + '_' + l).hasClass('king') && (k-x==1) && (y-l==1)) || 
+						   ($('#' + 'id_' + k + '_' + l).hasClass('pawn') && sideclass=='whiteside' && (k-x==1) && (y-l==1)))
+						{		
+							return true;
+						}
+						else
+							break;
+					}
+				}
+				for (k=x+1, l=y+1; k<count, l<count; k++, l++)
+				{
+					if ((sideclass=='blackside' && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||
+						(sideclass=='whiteside' && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))
+							break;
+					if ((sideclass=='whiteside' && $('#' + 'id_' + k + '_' + l).hasClass('blackside')) ||		
+						(sideclass=='blackside' && $('#' + 'id_' + k + '_' + l).hasClass('whiteside')))			//если чужая фигура, то проверяем, представляет ли она угрозу для позиции (x,y) короля
+					{
+						if ($('#' + 'id_' + k + '_' + l).hasClass('bishop') || $('#' + 'id_' + k + '_' + l).hasClass('queen') || 
+						   ($('#' + 'id_' + k + '_' + l).hasClass('king') && (k-x==1) && (l-y==1)) || 
+						   ($('#' + 'id_' + k + '_' + l).hasClass('pawn') && sideclass=='whiteside' && (k-x==1) && (l-y==1)))
+						{		
+							return true;
+						}
+						else
+							break;
+					}
+				}
+
+				//проверка на удар от коня
+
+				
+				if ($('#' + 'id_' + (x-2) + '_' + (y-1)).hasClass('knight'))
+					if ((sideclass=='blackside' && $('#' + 'id_' + (x-2) + '_' + (y-1)).hasClass('whiteside')) ||
+				   	    (sideclass=='whiteside' && $('#' + 'id_' + (x-2) + '_' + (y-1)).hasClass('blackside')))
+							return true;
+
+				if ($('#' + 'id_' + (x-2) + '_' + (y+1)).hasClass('knight'))
+					if ((sideclass=='blackside' && $('#' + 'id_' + (x-2) + '_' + (y+1)).hasClass('whiteside')) ||
+				   	    (sideclass=='whiteside' && $('#' + 'id_' + (x-2) + '_' + (y+1)).hasClass('blackside')))
+							return true;
+				
+				if ($('#' + 'id_' + (x-1) + '_' + (y-2)).hasClass('knight'))
+					if ((sideclass=='blackside' && $('#' + 'id_' + (x-1) + '_' + (y-2)).hasClass('whiteside')) ||
+				   	    (sideclass=='whiteside' && $('#' + 'id_' + (x-1) + '_' + (y-2)).hasClass('blackside')))
+							return true;
+
+				if ($('#' + 'id_' + (x-1) + '_' + (y+2)).hasClass('knight'))
+					if ((sideclass=='blackside' && $('#' + 'id_' + (x-1) + '_' + (y+2)).hasClass('whiteside')) ||
+				   	    (sideclass=='whiteside' && $('#' + 'id_' + (x-1) + '_' + (y+2)).hasClass('blackside')))
+							return true;
+
+				if ($('#' + 'id_' + (x+1) + '_' + (y-2)).hasClass('knight'))
+					if ((sideclass=='blackside' && $('#' + 'id_' + (x+1) + '_' + (y-2)).hasClass('whiteside')) ||
+				   	    (sideclass=='whiteside' && $('#' + 'id_' + (x+1) + '_' + (y-2)).hasClass('blackside')))
+							return true;
+
+				if ($('#' + 'id_' + (x+1) + '_' + (y+2)).hasClass('knight'))
+					if ((sideclass=='blackside' && $('#' + 'id_' + (x+1) + '_' + (y+2)).hasClass('whiteside')) ||
+				   	    (sideclass=='whiteside' && $('#' + 'id_' + (x+1) + '_' + (y+2)).hasClass('blackside')))
+							return true;
+
+				if ($('#' + 'id_' + (x+2) + '_' + (y-1)).hasClass('knight'))
+					if ((sideclass=='blackside' && $('#' + 'id_' + (x+2) + '_' + (y-1)).hasClass('whiteside')) ||
+				   	    (sideclass=='whiteside' && $('#' + 'id_' + (x+2) + '_' + (y-1)).hasClass('blackside')))
+							return true;
+
+				if ($('#' + 'id_' + (x+2) + '_' + (y+1)).hasClass('knight'))
+					if ((sideclass=='blackside' && $('#' + 'id_' + (x+2) + '_' + (y+1)).hasClass('whiteside')) ||
+				   	    (sideclass=='whiteside' && $('#' + 'id_' + (x+2) + '_' + (y+1)).hasClass('blackside')))
+							return true;
+
+		return false;
+
+
+	}
+
+
+
+
+</script>
+
+</head>
+
+<body>
+<!-- <input type="text" id="1" name="inputtext1" size="40"> -->
+<!-- <input type="button" id="btn1" value="ОК" onClick="CreateBoard()">  -->
+
+</body>
+
+</html>
